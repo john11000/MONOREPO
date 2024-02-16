@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DB_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  roleId    String    @map("role_id")
+  role      Role      @relation(fields: [roleId], references: [id])
+  customer  Customer?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Role {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  users       User[]
+
+  @@map("roles")
+}
+
+model Customer {
+  id           String      @id @default(uuid())
+  businessName String      @map("business_name")
+  userId       String      @unique @map("user_id")
+  user         User        @relation(fields: [userId], references: [id])
+  employees    Employee[]
+  timeSheets   Timesheet[]
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@map("customers")
+}
+
+model Employee {
+  id         String   @id @default(uuid())
+  name       String
+  payType    String   @map("pay_type")
+  payRate    Decimal  @map("pay_rate")
+  customerId String   @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("employees")
+}
+
+model Timesheet {
+  id             String           @id @default(uuid())
+  checkDate      DateTime         @map("check_date")
+  payPeriodStart DateTime         @map("pay_period_start")
+  payPeriodEnd   DateTime         @map("pay_period_end")
+  grossPayroll   Decimal          @map("gross_payroll")
+  status         String
+  notes          String?
+  customerId     String           @map("customer_id")
+  customer       Customer         @relation(fields: [customerId], references: [id])
+  entries        TimesheetEntry[]
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  @@map("timesheets")
+}
+
+model TimesheetEntry {
+  id           String    @id @default(uuid())
+  employeeName String    @map("employee_name")
+  payType      String    @map("pay_type")
+  payRate      Decimal   @map("pay_rate")
+  hours        Decimal?
+  grossWages   Decimal   @map("gross_wages")
+  timeSheetId  String    @map("timesheet_id")
+  timeSheet    Timesheet @relation(fields: [timeSheetId], references: [id])
+
+  @@map("timesheet_entries")
+}
